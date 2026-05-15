@@ -1,0 +1,515 @@
+//
+//  main.cpp
+//  Project 2
+//
+//  Created by Jimmy Rumsey on 5/15/26.
+//
+
+#include <iostream>
+#include <ctime>
+#include <cstdlib>
+#include <limits>
+
+using namespace std;
+
+struct Dataset {
+    int id;
+    int values[100];
+    int original[100];
+    int size;
+    bool isSorted;
+};
+
+struct SearchResult {
+    int index;
+    int comparisons;
+    bool found;
+};
+
+struct SortResult {
+    int comparisons;
+    int swapsOrMoves;
+};
+
+int generateUniqueID(int usedIDs[], int count);
+bool checkSorted(const int arr[], int n);
+void copyArray(int dest[], const int src[], int n);
+void displayArray(const int arr[], int n);
+
+SearchResult linearSearch(const int arr[], int n, int target);
+SearchResult binarySearch(const int arr[], int n, int target);
+
+SortResult selectionSort(int arr[], int n);
+SortResult insertionSort(int arr[], int n);
+
+void pressAnyKey();
+void clearInput();
+
+int main() {
+
+    srand(time(0));
+
+    Dataset data;
+    bool datasetExists = false;
+
+    int usedIDs[100];
+    int usedCount = 0;
+
+    int choice;
+
+    do {
+
+        cout << "\n*************** Algorithm Workbench ***************\n";
+        cout << "1- Create a new dataset\n";
+        cout << "2- Display current dataset\n";
+        cout << "3- Perform Linear Search\n";
+        cout << "4- Perform Binary Search\n";
+        cout << "5- Sort using Selection Sort\n";
+        cout << "6- Sort using Insertion Sort\n";
+        cout << "7- Restore original dataset\n";
+        cout << "0- Exit\n";
+        cout << "Choice: ";
+        cin >> choice;
+
+        switch (choice) {
+
+        case 1: {
+            int method;
+
+            cout << "\nEnter dataset size (1-100): ";
+            cin >> data.size;
+
+            while (data.size < 1 || data.size > 100) {
+                cout << "Invalid size. Enter again: ";
+                cin >> data.size;
+            }
+
+            cout << "\nChoose input method:\n";
+            cout << "1- Manual\n";
+            cout << "2- Random\n";
+            cout << "Choice: ";
+            cin >> method;
+
+            if (method == 1) {
+
+                for (int i = 0; i < data.size; i++) {
+                    cout << "Enter value " << i + 1 << ": ";
+                    cin >> data.values[i];
+                }
+
+            }
+            else if (method == 2) {
+
+                int minVal, maxVal;
+
+                cout << "Enter minimum value: ";
+                cin >> minVal;
+
+                cout << "Enter maximum value: ";
+                cin >> maxVal;
+
+                while (minVal > maxVal) {
+                    cout << "Minimum cannot exceed maximum.\n";
+                    cout << "Enter minimum value: ";
+                    cin >> minVal;
+
+                    cout << "Enter maximum value: ";
+                    cin >> maxVal;
+                }
+
+                for (int i = 0; i < data.size; i++) {
+                    data.values[i] = minVal + rand() % (maxVal - minVal + 1);
+                }
+            }
+            else {
+                cout << "Invalid method selected.\n";
+                pressAnyKey();
+                break;
+            }
+
+            data.id = generateUniqueID(usedIDs, usedCount);
+            usedIDs[usedCount++] = data.id;
+
+            copyArray(data.original, data.values, data.size);
+
+            data.isSorted = checkSorted(data.values, data.size);
+
+            datasetExists = true;
+
+            cout << "\nGreat! A new dataset has been created.\n";
+            cout << "Dataset ID: " << data.id << endl;
+            cout << "Size: " << data.size << endl;
+            cout << "Sorted: " << (data.isSorted ? "Yes" : "No") << endl;
+
+            cout << "Values: ";
+            displayArray(data.values, data.size);
+
+            pressAnyKey();
+            break;
+        }
+
+        case 2: {
+
+            if (!datasetExists) {
+                cout << "\nNo dataset has been created yet.\n";
+            }
+            else {
+
+                cout << "\n------ Current Dataset ------\n";
+                cout << "Dataset ID: " << data.id << endl;
+                cout << "Size: " << data.size << endl;
+                cout << "Sorted: " << (data.isSorted ? "Yes" : "No") << endl;
+
+                cout << "Values: ";
+                displayArray(data.values, data.size);
+            }
+
+            pressAnyKey();
+            break;
+        }
+
+        case 3: {
+
+            if (!datasetExists) {
+                cout << "\nNo dataset has been created yet.\n";
+                pressAnyKey();
+                break;
+            }
+
+            int target;
+
+            cout << "\nEnter target value: ";
+            cin >> target;
+
+            SearchResult result = linearSearch(data.values, data.size, target);
+
+            cout << "\n------ Linear Search Report ------\n";
+            cout << "Target: " << target << endl;
+            cout << "Found: " << (result.found ? "Yes" : "No") << endl;
+            cout << "Index: " << result.index << endl;
+            cout << "Comparisons: " << result.comparisons << endl;
+
+            cout << "\nTheoretical Complexity:\n";
+            cout << "Best Case: O(1)\n";
+            cout << "Average Case: O(n)\n";
+            cout << "Worst Case: O(n)\n";
+            cout << "----------------------------------\n";
+
+            pressAnyKey();
+            break;
+        }
+
+        case 4: {
+
+            if (!datasetExists) {
+                cout << "\nNo dataset has been created yet.\n";
+                pressAnyKey();
+                break;
+            }
+
+            if (!data.isSorted) {
+                cout << "\nBinary Search cannot run because the dataset is not sorted.\n";
+                pressAnyKey();
+                break;
+            }
+
+            int target;
+
+            cout << "\nEnter target value: ";
+            cin >> target;
+
+            SearchResult result = binarySearch(data.values, data.size, target);
+
+            cout << "\n------ Binary Search Report ------\n";
+            cout << "Target: " << target << endl;
+            cout << "Found: " << (result.found ? "Yes" : "No") << endl;
+            cout << "Index: " << result.index << endl;
+            cout << "Comparisons: " << result.comparisons << endl;
+
+            cout << "\nTheoretical Complexity:\n";
+            cout << "Best Case: O(1)\n";
+            cout << "Average Case: O(log n)\n";
+            cout << "Worst Case: O(log n)\n";
+            cout << "----------------------------------\n";
+
+            pressAnyKey();
+            break;
+        }
+
+        case 5: {
+
+            if (!datasetExists) {
+                cout << "\nNo dataset has been created yet.\n";
+                pressAnyKey();
+                break;
+            }
+
+            cout << "\nBefore Selection Sort:\n";
+            displayArray(data.values, data.size);
+
+            SortResult result = selectionSort(data.values, data.size);
+
+            data.isSorted = true;
+
+            cout << "\nAfter Selection Sort:\n";
+            displayArray(data.values, data.size);
+
+            cout << "Comparisons: " << result.comparisons << endl;
+            cout << "Swaps: " << result.swapsOrMoves << endl;
+
+            cout << "\nTheoretical Complexity:\n";
+            cout << "Time Complexity: O(n^2)\n";
+            cout << "Auxiliary Space: O(1)\n";
+
+            pressAnyKey();
+            break;
+        }
+
+        case 6: {
+
+            if (!datasetExists) {
+                cout << "\nNo dataset has been created yet.\n";
+                pressAnyKey();
+                break;
+            }
+
+            cout << "\nBefore Insertion Sort:\n";
+            displayArray(data.values, data.size);
+
+            SortResult result = insertionSort(data.values, data.size);
+
+            data.isSorted = true;
+
+            cout << "\nAfter Insertion Sort:\n";
+            displayArray(data.values, data.size);
+
+            cout << "Comparisons: " << result.comparisons << endl;
+            cout << "Data Moves: " << result.swapsOrMoves << endl;
+
+            cout << "\nTheoretical Complexity:\n";
+            cout << "Best Case: O(n)\n";
+            cout << "Average Case: O(n^2)\n";
+            cout << "Worst Case: O(n^2)\n";
+            cout << "Auxiliary Space: O(1)\n";
+
+            pressAnyKey();
+            break;
+        }
+
+        case 7: {
+
+            if (!datasetExists) {
+                cout << "\nNo dataset has been created yet.\n";
+                pressAnyKey();
+                break;
+            }
+
+            copyArray(data.values, data.original, data.size);
+
+            data.isSorted = checkSorted(data.values, data.size);
+
+            cout << "\nDataset ID: " << data.id << endl;
+
+            cout << "Restored Contents: ";
+            displayArray(data.values, data.size);
+
+            cout << "Sorted Status: "
+                 << (data.isSorted ? "Yes" : "No") << endl;
+
+            cout << "\nOriginal dataset restored successfully!\n";
+
+            pressAnyKey();
+            break;
+        }
+
+        case 0:
+            cout << "\nThank you for using the Algorithm Workbench!\n";
+            cout << "Goodbye!\n";
+            break;
+
+        default:
+            cout << "\nInvalid choice.\n";
+        }
+
+    } while (choice != 0);
+
+    return 0;
+}
+
+int generateUniqueID(int usedIDs[], int count) {
+
+    int id;
+    bool duplicate;
+
+    do {
+        duplicate = false;
+        id = 10000 + rand() % 90000;
+
+        for (int i = 0; i < count; i++) {
+            if (usedIDs[i] == id) {
+                duplicate = true;
+                break;
+            }
+        }
+
+    } while (duplicate);
+
+    return id;
+}
+
+bool checkSorted(const int arr[], int n) {
+
+    for (int i = 0; i < n - 1; i++) {
+
+        if (arr[i] > arr[i + 1]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void copyArray(int dest[], const int src[], int n) {
+
+    for (int i = 0; i < n; i++) {
+        dest[i] = src[i];
+    }
+}
+
+void displayArray(const int arr[], int n) {
+
+    for (int i = 0; i < n; i++) {
+        cout << arr[i] << " ";
+    }
+
+    cout << endl;
+}
+
+SearchResult linearSearch(const int arr[], int n, int target) {
+
+    SearchResult result;
+
+    result.index = -1;
+    result.comparisons = 0;
+    result.found = false;
+
+    for (int i = 0; i < n; i++) {
+
+        result.comparisons++;
+
+        if (arr[i] == target) {
+            result.index = i;
+            result.found = true;
+            return result;
+        }
+    }
+
+    return result;
+}
+
+SearchResult binarySearch(const int arr[], int n, int target) {
+
+    SearchResult result;
+
+    result.index = -1;
+    result.comparisons = 0;
+    result.found = false;
+
+    int left = 0;
+    int right = n - 1;
+
+    while (left <= right) {
+
+        result.comparisons++;
+
+        int mid = (left + right) / 2;
+
+        if (arr[mid] == target) {
+            result.index = mid;
+            result.found = true;
+            return result;
+        }
+        else if (target < arr[mid]) {
+            right = mid - 1;
+        }
+        else {
+            left = mid + 1;
+        }
+    }
+
+    return result;
+}
+
+SortResult selectionSort(int arr[], int n) {
+
+    SortResult result;
+
+    result.comparisons = 0;
+    result.swapsOrMoves = 0;
+
+    for (int i = 0; i < n - 1; i++) {
+
+        int minIndex = i;
+
+        for (int j = i + 1; j < n; j++) {
+
+            result.comparisons++;
+
+            if (arr[j] < arr[minIndex]) {
+                minIndex = j;
+            }
+        }
+
+        if (minIndex != i) {
+
+            int temp = arr[i];
+            arr[i] = arr[minIndex];
+            arr[minIndex] = temp;
+
+            result.swapsOrMoves++;
+        }
+    }
+
+    return result;
+}
+
+SortResult insertionSort(int arr[], int n) {
+
+    SortResult result;
+
+    result.comparisons = 0;
+    result.swapsOrMoves = 0;
+
+    for (int i = 1; i < n; i++) {
+
+        int key = arr[i];
+        int j = i - 1;
+
+        while (j >= 0) {
+
+            result.comparisons++;
+
+            if (arr[j] > key) {
+
+                arr[j + 1] = arr[j];
+                result.swapsOrMoves++;
+
+                j--;
+            }
+            else {
+                break;
+            }
+        }
+
+        arr[j + 1] = key;
+    }
+
+    return result;
+}
+
+void pressAnyKey() {
+
+    cout << "\nPress Enter to return to Main Menu!";
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    cin.get();
+}
